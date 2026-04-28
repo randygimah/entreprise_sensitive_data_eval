@@ -4,18 +4,18 @@ install-dev:
 	pip install -r requirements.txt
 
 format:
-	black src/
-	isort src/
+	black sensitive_eval/
+	isort sensitive_eval/
 
 lint:
-	flake8 src/
-	isort --check-only --diff src/
+	flake8 sensitive_eval/
+	isort --check-only --diff sensitive_eval/
 
 type-check:
-	mypy src/
+	mypy sensitive_eval/
 
 test:
-	pytest --tb=short || (echo "No tests found or tests failed - continuing..." && exit 0)
+	pytest --tb=short 
 
 clean:
 	find . -type f -name "*.pyc" -delete
@@ -27,4 +27,4 @@ check: format lint type-check test
 
 # Setup development environment
 setup: install-dev
-	pre-commit install  # if you add pre-commit later
+	pre-commit install  # if pre-commit is added later
