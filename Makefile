@@ -15,7 +15,7 @@ type-check:
 	mypy sensitive_eval/
 
 test:
-	pytest --tb=short 
+	pytest --tb=short
 
 clean:
 	find . -type f -name "*.pyc" -delete
