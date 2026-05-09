@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Mapping, Optional
 
-# Enums for vulnerability finding type
+
+# Enums for sensitive data finding type
 class EntityType(str, Enum):
     EMAIL = "email"
     PHONE_NUMBER = "phone_number"
@@ -16,7 +17,7 @@ class EntityType(str, Enum):
     PASSWORD = "password"
 
 
-# Enums for vulnerability source type
+# Enums for sensitive data source type
 class SourceType(str, Enum):
     SUPPORT_TICKET = "support_ticket"
     INCIDENT_REPORT = "incident_report"
@@ -27,7 +28,7 @@ class SourceType(str, Enum):
     ATTACHMENT_TEXT = "attachment_text"
 
 
-# Enums for difficulty level of finding vulnerability
+# Enums for difficulty level of finding sensitive data
 class DifficultyLevel(str, Enum):
     HARD = "hard"
     MEDIUM = "medium"
@@ -83,6 +84,8 @@ class DatasetSample:
     source_type: SourceType
     labels: tuple[SensitiveSpan, ...] = field(default_factory=tuple)
     difficulty: Optional[DifficultyLevel] = None
+    # A caller-provided dict can still be mutated outside this frozen dataclass.
+    # Convert this later if stronger nested immutability becomes important.
     metadata: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
