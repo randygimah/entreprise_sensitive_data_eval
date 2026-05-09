@@ -15,7 +15,6 @@ from sensitive_eval.core.models import (
     TextSpan,
 )
 
-
 JsonDict = Dict[str, Any]
 
 
