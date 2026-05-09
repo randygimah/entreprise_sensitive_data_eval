@@ -10,8 +10,8 @@ Assumed pace: 10-12 hours per week.
 
 | Week | Mission | Status |
 | --- | --- | --- |
-| 1 | Define the shared data model and dataset schema | Not started |
-| 2 | Build the first synthetic labelled dataset | Not started |
+| 1 | Define the shared data model and dataset schema | Done |
+| 2 | Build the first synthetic labelled dataset | Started |
 | 3 | Implement the regex detector baseline | Not started |
 | 4 | Build the evaluation harness | Not started |
 | 5 | Implement the NER detector baseline | Not started |
@@ -25,15 +25,15 @@ Major mission: define the core data contracts that every detector, evaluator,
 and report will use.
 
 Build:
-- `TextSpan`, `SensitiveSpan`, `Finding`, and `DetectorResult`
-- shared enums for entity types, source types, and difficulty levels
-- `DatasetSample` schema
-- validation tests for span boundaries and sample labels
+- `TextSpan`, `SensitiveSpan`, `Finding`, and `DetectorResult` ✅
+- shared enums for entity types, source types, and difficulty levels ✅
+- `DatasetSample` schema ✅
+- validation tests for span boundaries and sample labels ✅
 
 README/report update:
-- describe the shared finding format
-- explain why consistent span-based evaluation matters
-- document the initial entity taxonomy
+- describe the shared finding format ✅
+- explain why consistent span-based evaluation matters ✅
+- document the initial entity taxonomy ✅
 
 Done when:
 - core models are implemented and immutable
