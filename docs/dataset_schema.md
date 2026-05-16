@@ -9,8 +9,7 @@ The dataset uses JSONL, also known as JSON Lines, where each line is one
 independently loadable labelled enterprise text sample. Each line is a
 self-contained JSON object.
 
-JSONL is used because it is easy to append, diff, stream, and inspect. It also
-makes row-level errors easy to locate when validation fails.
+JSONL is used because it is easy to append, diff, stream, and inspect. It also makes row-level errors easy to locate when validation fails.
 
 ## Top-Level Sample Fields
 
