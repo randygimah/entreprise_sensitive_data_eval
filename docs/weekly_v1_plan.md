@@ -46,16 +46,16 @@ Major mission: create a small but realistic synthetic enterprise dataset.
 
 Build:
 - hand-authored seed samples across support tickets, incident reports, change
-  requests, operational notes, comments, and config snippets
+  requests, operational notes, comments, and config snippets ✅
 - labelled spans for emails, phone numbers, IP addresses, names, account IDs,
-  access-key-like secrets, token-like secrets, and password disclosures
-- JSONL loader and saver
-- tests that confirm labels align with the source text
+  access-key-like secrets, token-like secrets, and password disclosures ✅
+- JSONL loader and saver ✅
+- tests that confirm labels align with the source text ✅
 
 README/report update:
-- document the dataset design
-- explain why synthetic data is used
-- include examples with masked sensitive values
+- document the dataset design ✅
+- explain why synthetic data is used ✅
+- include examples with masked sensitive values ✅
 
 Done when:
 - at least 40 labelled samples exist
