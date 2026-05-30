@@ -67,7 +67,7 @@ Done when:
 Major mission: implement the deterministic baseline.
 
 Build:
-- detector base interface
+- detector base interface ✅
 - regex detector for structured targets
 - rule IDs and confidence defaults
 - privacy-safe result output using masked values
