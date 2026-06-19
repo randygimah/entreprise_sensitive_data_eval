@@ -117,13 +117,3 @@ class DetectorResult:
             raise ValueError("Detector name must not be empty")
         if self.latency_ms is not None and self.latency_ms < 0:
             raise ValueError("Detector latency must be non-negative")
-
-
-# dataclass for regex rule to prevent hardcoded loop per entity for regex detection
-@dataclass(frozen=True)
-class RegexRule:
-    rule_id: str
-    entity_type: EntityType
-    pattern: Pattern[str]
-    confidence_score: float
-    group_name: Optional[str] = None
