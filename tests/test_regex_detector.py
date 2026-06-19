@@ -9,7 +9,8 @@ class TestRegexFinding:
         ticket1 = DatasetSample(
             sample_id="sample-001",
             text=(
-                "Support ticket: Please contact Alice Morgan at alice.morgan@example.com for account ACC-10492."
+                "Support ticket: Please contact Alice Morgan at "
+                "alice.morgan@example.com for account ACC-10492."
             ),
             source_type=SourceType.SUPPORT_TICKET,
             difficulty=None,
@@ -32,7 +33,8 @@ class TestRegexFinding:
         ticket2 = DatasetSample(
             sample_id="sample-002",
             text=(
-                "Deploy note: billing-prod used account svc-billing and reached database host 172.16.4.22."
+                "Deploy note: billing-prod used account svc-billing and reached "
+                "database host 172.16.4.22."
             ),
             source_type=SourceType.OPERATIONAL_NOTE,
             difficulty=None,
@@ -76,7 +78,8 @@ class TestRegexFinding:
         ticket4 = DatasetSample(
             sample_id="sample-004",
             text=(
-                "Internal comment: temporary password is Winter2026! for user jordan.lee."
+                "Internal comment: temporary password is Winter2026! for user "
+                "jordan.lee."
             ),
             source_type=SourceType.INTERNAL_COMMENT,
             difficulty=None,
