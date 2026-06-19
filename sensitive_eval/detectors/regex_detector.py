@@ -52,12 +52,26 @@ DEFAULT_RULES = (
         rule_id="contextual_password",
         entity_type=EntityType.PASSWORD,
         pattern=re.compile(
-            r"\b(?:password|passwd|pwd)\s*[:=]\s*(?P<secret>[^\s,;]+)", re.IGNORECASE
+            r"\b(?:password|passwd|pwd)\s*(?::|=|is)\s*(?P<secret>[^\s,;]+)",
+            re.IGNORECASE,
         ),
         confidence_score=0.85,
         group_name="secret",  # This allows finding span to point only at the password
     ),
-    # TODO: ADD TOKEN A
+    RegexRule(
+        rule_id="token_like_secret",
+        entity_type=EntityType.TOKEN,
+        pattern=re.compile(
+            r"\b(?:"
+            r"sk_(?:live|test)_[A-Za-z0-9_]{8,}|"
+            r"ghp_[A-Za-z0-9_]{8,}|"
+            r"(?:[A-Za-z]+_)*tok_[A-Za-z0-9_]{6,}|"
+            r"sess_[A-Za-z0-9_]{8,}|"
+            r"deploy_live_[A-Za-z0-9_]{8,}"
+            r")\b"
+        ),
+        confidence_score=0.88,
+    ),
 )
 
 
@@ -76,7 +90,7 @@ class RegexDetector(BaseDetector):
 
                 if rule.group_name:
                     start = match.start(rule.group_name)
-                    end = match.start(rule.group_name)
+                    end = match.end(rule.group_name)
                 else:
                     start = match.start()
                     end = match.end()
