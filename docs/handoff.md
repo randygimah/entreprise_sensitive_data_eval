@@ -150,9 +150,9 @@ Recommended next sequence:
 2. Finalize `BaseDetector`.
    - Keep only the abstract interface in `base.py`.
    - Ensure the method is lowercase: `detect`.
-3. Move `RegexRule` from `core/models.py` into `regex_detector.py`.
+3. Move `RegexRule` from `core/models.py` into `regex_detector.py`.✅
    - It is detector-specific, not a shared core model.
-4. Implement compiled regex patterns in `regex_detector.py`.
+4. Implement compiled regex patterns in `regex_detector.py`.✅
    - email
    - IPv4 address
    - phone number
@@ -160,7 +160,7 @@ Recommended next sequence:
    - token-like strings
    - contextual password disclosures
    - possibly account identifiers
-5. Implement `RegexDetector.detect`.
+5. Implement `RegexDetector.detect`.✅
    - Iterate through rules with `pattern.finditer(sample.text)`.
    - Use named capture groups for contextual password rules so the span covers
      only the sensitive value.
