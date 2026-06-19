@@ -2,7 +2,8 @@
 Abstract interface for detection.
 Defines a contract that every detector must follow.
 Every detector answer the same question: Given a DatasetSample, return a DetectorResult.
-Every subclass must consume the base class method to prevent raising an error when instantiated
+Every subclass must consume the base class method to prevent
+raising an error when instantiated
 This keeps regex, NER, LLM, and hybrid detectors interchangeable.
 """
 
