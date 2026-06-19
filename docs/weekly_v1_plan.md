@@ -11,15 +11,15 @@ Assumed pace: 10-12 hours per week.
 | Week | Mission | Status |
 | --- | --- | --- |
 | 1 | Define the shared data model and dataset schema | Done |
-| 2 | Build the first synthetic labelled dataset | Started |
-| 3 | Implement the regex detector baseline | Not started |
+| 2 | Build the first synthetic labelled dataset | Done |
+| 3 | Implement the regex detector baseline | Started |
 | 4 | Build the evaluation harness | Not started |
 | 5 | Implement the NER detector baseline | Not started |
 | 6 | Implement the local LLM detector baseline | Not started |
 | 7 | Run comparison experiments and latency benchmarks | Not started |
 | 8 | Write failure analysis and polish the research report | Not started |
 
-## Week 1: Shared Models And Dataset Schema
+## Week 1: Shared Models And Dataset Schema✅
 
 Major mission: define the core data contracts that every detector, evaluator,
 and report will use.
@@ -40,7 +40,7 @@ Done when:
 - dataset samples can represent raw text plus labelled sensitive spans
 - tests cover valid and invalid spans
 
-## Week 2: Synthetic Labelled Dataset
+## Week 2: Synthetic Labelled Dataset✅
 
 Major mission: create a small but realistic synthetic enterprise dataset.
 
@@ -68,20 +68,22 @@ Major mission: implement the deterministic baseline.
 
 Build:
 - detector base interface ✅
-- regex detector for structured targets
-- rule IDs and confidence defaults
-- privacy-safe result output using masked values
-- tests for each regex rule
+- regex detector for structured targets ✅
+- rule IDs and confidence defaults ✅
+- privacy-safe result output using masked values ✅
+- tests for each implemented regex rule ✅
 
 README/report update:
-- describe regex strengths and expected blind spots
-- document detector output format
-- include first qualitative examples
+- describe regex strengths and expected blind spots ✅
+- document detector output format ✅
+- include first qualitative examples ✅
 
 Done when:
-- regex detector runs over the synthetic dataset
-- findings use the shared `Finding` format
-- tests cover common true positives and false positives
+- regex detector runs over representative synthetic samples ✅
+- findings use the shared `Finding` format ✅
+- tests cover common true positives ✅
+- remaining polish: add false-positive guards and optional dataset-wide smoke
+  test
 
 ## Week 4: Evaluation Harness
 
