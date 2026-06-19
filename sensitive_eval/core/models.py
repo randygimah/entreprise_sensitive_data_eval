@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Mapping, Optional, Pattern
+from typing import Mapping, Optional
 
 
 # Enums for sensitive data finding type
