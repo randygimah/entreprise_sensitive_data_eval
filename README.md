@@ -5,6 +5,35 @@ detectors on synthetic enterprise ticket-style text. The v1 compares a
 deterministic regex baseline with later NER and local LLM detectors using a
 shared span-based output format.
 
+## Intended Architecture
+
+```mermaid
+flowchart LR
+    A["Versioned synthetic ticket dataset"] --> B["Validated DatasetSample objects"]
+
+    B --> R["Regex detector"]
+    B --> N["Local NER detector"]
+    B --> L["Local instruction-tuned LLM"]
+
+    R --> F["Shared DetectorResult / Finding format"]
+    N --> F
+    L --> F
+
+    F --> D["Deduplication and privacy-safe postprocessing"]
+    D --> E["Exact and overlap span matching"]
+
+    E --> M["Overall and per-entity metrics"]
+    E --> X["Masked error analysis"]
+    F --> T["Latency and resource benchmark"]
+
+    M --> O["Versioned result artifacts"]
+    X --> O
+    T --> O
+
+    O --> TN["Technical notes"]
+    TN --> RP["Final research report"]
+```
+
 ## Dataset Format
 
 Synthetic samples are stored as JSONL, with one labelled enterprise text sample
