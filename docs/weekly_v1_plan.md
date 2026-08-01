@@ -69,9 +69,14 @@ Major mission: implement the deterministic baseline.
 Build:
 - detector base interface ✅
 - regex detector for structured targets ✅
+- phone-number rule with digit-count, boundary, and negative-case tests ✅
 - rule IDs and confidence defaults ✅
 - privacy-safe result output using masked values ✅
 - tests for each implemented regex rule ✅
+- false-positive guards for password, token, access-key, and phone-like strings
+- deterministic finding order and repeated-run regression test
+- dataset-wide smoke test over the development JSONL
+- document the supported and intentionally unsupported regex entity types
 
 README/report update:
 - describe regex strengths and expected blind spots ✅
@@ -82,20 +87,27 @@ Done when:
 - regex detector runs over representative synthetic samples ✅
 - findings use the shared `Finding` format ✅
 - tests cover common true positives ✅
-- remaining polish: add false-positive guards and optional dataset-wide smoke
-  test
+- all rule-level positive, negative, masking, and exact-boundary tests pass
+- the detector processes the full development dataset without errors
+- outputs are deterministic and contain no raw matched values
+- the frozen rule set and baseline version are documented
 
 ## Week 4: Evaluation Harness
 
 Major mission: make performance measurement reproducible.
 
 Build:
-- exact span matching
-- optional overlap-based span matching
-- precision, recall, and F1 metrics
-- per-entity metrics
+- pure exact-span match predicate with boundary and wrong-entity tests
+- one-to-one exact matching over prediction and gold collections
+- secondary one-to-one overlap diagnostic using the frozen IoU >= 0.5 threshold
+- TP, FP, FN, and boundary-error extraction
+- micro, macro, and per-entity precision, recall, and F1 metrics
+- zero-denominator behavior defined in Evaluation Protocol v0.1
+- results by source type, difficulty, and challenge tag
+- false-positive count and false-positive ticket rate for zero-label samples
 - false positive and false negative extraction
-- baseline experiment script
+- privacy-safe result serialization with no raw text or value-derived hashes
+- baseline experiment script and one clean evaluation command
 
 README/report update:
 - define the evaluation protocol
@@ -112,11 +124,20 @@ Done when:
 Major mission: add a model-based detector for names and contextual entities.
 
 Build:
-- NER detector interface implementation
-- local model loading strategy
-- mapping from NER labels to project `EntityType` values
-- latency measurement for the NER detector
-- tests using mocked model outputs
+- implement the `BaseDetector` adapter for `nvidia/gliner-PII`
+- keep GLiNER as an optional dependency with lazy local model loading
+- pin the model repository revision, GLiNER/PyTorch versions, and device
+- prefer the published `safetensors` weights where supported
+- inventory native GLiNER labels and map supported labels to project
+  `EntityType` values
+- explicitly document project entity types that the NER model does not support
+- validate model character offsets against the source text and exact-span policy
+- test label mapping, confidence filtering, offsets, empty results, and model
+  failures using mocked outputs
+- tune the confidence threshold on development data only using a predefined
+  threshold grid and selection criterion
+- freeze the model revision, mapping, and threshold before held-out evaluation
+- measure model-load time separately from per-sample inference latency
 
 README/report update:
 - document model choice and local inference constraints
@@ -125,6 +146,10 @@ README/report update:
 
 Done when:
 - NER detector runs locally or has a clean optional dependency path
+- the pinned `nvidia/gliner-PII` revision is reproducible from configuration
+- native labels, unsupported entities, and the development-tuned threshold are
+  documented
+- mocked tests do not require downloading or loading the model
 - NER results are evaluated with the same harness
 - per-entity metrics compare regex and NER
 
@@ -133,11 +158,27 @@ Done when:
 Major mission: implement the prompt-based local LLM detector.
 
 Build:
-- prompt template for sensitive-content detection
-- structured JSON response parsing
-- validation from LLM outputs into `Finding` objects
-- timeout/error handling
-- tests for parser behavior using fixed mock responses
+- verify the local Ollama runtime on the target M4 Pro hardware
+- pre-register a development-only model pilot and selection rule, initially
+  comparing `qwen3:30b-instruct` with `gpt-oss:20b`
+- pin the selected model name, immutable digest, quantisation, Ollama version,
+  context length, and hardware configuration
+- version the sensitive-content prompt and project entity definitions
+- request non-streaming structured output using an explicit JSON Schema
+- validate structured responses with Pydantic before creating findings
+- validate entity types, offsets, and source-text alignment, including repeated
+  values and ambiguous spans
+- use a frozen decoding configuration such as temperature 0 and disabled or
+  minimal reasoning where supported
+- implement timeout, unavailable-model, malformed JSON, schema failure,
+  invalid-span, and empty-result handling
+- sanitize exceptions and ensure prompts and raw ticket text are not persisted
+  in result artifacts or logs
+- test parsing and all failure paths using fixed mocked responses
+- measure schema-valid rate, invalid-span rate, model-load time, p50/p95 latency,
+  throughput, and repeated-run agreement on development data
+- freeze the model, prompt, parser, and decoding configuration before held-out
+  evaluation
 
 README/report update:
 - document the prompt design
@@ -148,6 +189,9 @@ Done when:
 - local LLM detector can run on a subset of samples
 - outputs are converted into the shared finding format
 - failures are captured without breaking the full experiment
+- the selected model and immutable runtime configuration are reproducible
+- model selection and prompt tuning use development data only
+- repeated runs and privacy-safe logs are covered by tests
 
 ## Week 7: Comparison Experiments And Benchmarking
 
@@ -158,6 +202,10 @@ Build:
 - latency benchmark script
 - aggregated metrics tables
 - per-entity comparison outputs
+- regex-plus-NER union/hybrid comparison for measuring incremental LLM value
+- exact-match, boundary-error, source, difficulty, challenge-tag, and negative
+  ticket breakdowns
+- model-load time, p50/p95 inference latency, throughput, and resource metadata
 - result artifacts that avoid raw sensitive values
 
 README/report update:

@@ -75,6 +75,15 @@ DEFAULT_RULES = (
         ),
         confidence_score=0.88,
     ),
+    RegexRule(
+        rule_id="phone_number",
+        entity_type=EntityType.PHONE_NUMBER,
+        # Match 7-15 digits with optional international prefix and common
+        # separators. The match starts and ends on a digit so surrounding
+        # sentence whitespace and punctuation are not included in the span.
+        pattern=re.compile(r"(?<![\w+])\+?\d(?:[ ()-]*\d){6,14}(?!\w)"),
+        confidence_score=0.88,
+    ),
 )
 
 
