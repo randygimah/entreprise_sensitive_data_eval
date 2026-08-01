@@ -1,7 +1,9 @@
 """Test for regex detection"""
 
+import pytest
+
+from sensitive_eval.core.models import DatasetSample, EntityType, SourceType
 from sensitive_eval.detectors.regex_detector import RegexDetector
-from sensitive_eval.core.models import DatasetSample, SourceType, EntityType
 
 
 class TestRegexFinding:
@@ -123,9 +125,56 @@ class TestRegexFinding:
         assert finding.entity_type == EntityType.TOKEN
         assert finding.rule_id == "token_like_secret"
 
-    def test_detect_multiple_findings_in_one_result(self):
+    def test_detect_phone_number(self):
         ticket6 = DatasetSample(
             sample_id="sample-006",
+            text=(
+                "Alice's phone number is 0447576617230 if you would want to "
+                "contact her."
+            ),
+            source_type=SourceType.INCIDENT_REPORT,
+            difficulty=None,
+        )
+        results = RegexDetector().detect(ticket6)
+        assert len(results.findings) == 1
+
+        assert results.sample_id == "sample-006"
+        assert results.detector_name == "regex"
+
+        finding = results.findings[0]
+        assert finding.masked_value == "0447******230"
+        assert finding.detector_name == "regex"
+        assert finding.confidence_score == 0.88
+        assert finding.span.start == 24
+        assert finding.span.end == 37
+        assert finding.entity_type == EntityType.PHONE_NUMBER
+        assert finding.rule_id == "phone_number"
+
+    @pytest.mark.parametrize(
+        "text",
+        (
+            "Build 123456 completed successfully.",
+            "Reference abc1234567890 is not a phone number.",
+            "Invalid contact 1234567890123456 is too long.",
+        ),
+    )
+    def test_phone_number_rejects_invalid_candidates(self, text):
+        sample = DatasetSample(
+            sample_id="phone-negative",
+            text=text,
+            source_type=SourceType.INTERNAL_COMMENT,
+        )
+
+        results = RegexDetector().detect(sample)
+
+        assert all(
+            finding.entity_type != EntityType.PHONE_NUMBER
+            for finding in results.findings
+        )
+
+    def test_detect_multiple_findings_in_one_result(self):
+        ticket7 = DatasetSample(
+            sample_id="sample-007",
             text=(
                 "Incident note: service at 10.24.8.15 failed after token "
                 "sk_live_51HxExampleToken was pasted into chat."
@@ -133,7 +182,7 @@ class TestRegexFinding:
             source_type=SourceType.INCIDENT_REPORT,
             difficulty=None,
         )
-        results = RegexDetector().detect(ticket6)
+        results = RegexDetector().detect(ticket7)
         assert len(results.findings) == 2
 
         entity_types = {finding.entity_type for finding in results.findings}

@@ -1,17 +1,19 @@
 """Tests for shared internal data models"""
 
+import re
+from dataclasses import FrozenInstanceError
+
+import pytest
+
 from sensitive_eval.core.models import (
-    TextSpan,
-    SensitiveSpan,
-    Finding,
     DatasetSample,
     DetectorResult,
     EntityType,
+    Finding,
+    SensitiveSpan,
     SourceType,
+    TextSpan,
 )
-import pytest
-from dataclasses import FrozenInstanceError
-import re
 
 
 class TestTextSpan:
