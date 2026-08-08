@@ -73,10 +73,10 @@ Build:
 - rule IDs and confidence defaults ✅
 - privacy-safe result output using masked values ✅
 - tests for each implemented regex rule ✅
-- false-positive guards for password, token, access-key, and phone-like strings
-- deterministic finding order and repeated-run regression test
+- false-positive guards for password, token, access-key, and phone-like strings ✅
+- deterministic finding order and repeated-run regression test ✅
 - dataset-wide smoke test over the development JSONL
-- document the supported and intentionally unsupported regex entity types
+- document the supported and intentionally unsupported regex entity types ✅
 
 README/report update:
 - describe regex strengths and expected blind spots ✅
@@ -87,10 +87,10 @@ Done when:
 - regex detector runs over representative synthetic samples ✅
 - findings use the shared `Finding` format ✅
 - tests cover common true positives ✅
-- all rule-level positive, negative, masking, and exact-boundary tests pass
+- all rule-level positive, negative, masking, and exact-boundary tests pass ✅
 - the detector processes the full development dataset without errors
-- outputs are deterministic and contain no raw matched values
-- the frozen rule set and baseline version are documented
+- outputs are deterministic and contain no raw matched values ✅
+- the frozen rule set and baseline version are documented ✅
 
 ## Week 4: Evaluation Harness
 
