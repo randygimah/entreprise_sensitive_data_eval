@@ -26,36 +26,71 @@ class RegexRule:
     group_name: Optional[str] = None
 
 
+PASSWORD_CUE = r"(?<![A-Za-z0-9])" r"(?:[A-Za-z0-9]+_)*" r"(?:password|passwd|pwd)\b"
+
+PASSWORD_SEPARATOR = r"\s*(?:[:=]|is\b)\s*"
+IPV4_OCTET = r"(?:25[0-5]|2[0-4]\d|1?\d?\d)"
+
+
 # default rules to specify specific entity rules
 DEFAULT_RULES = (
     RegexRule(
         rule_id="email",
         entity_type=EntityType.EMAIL,
-        pattern=re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}\b"),
+        pattern=re.compile(
+            r"(?<![A-Za-z0-9._%+-])"
+            r"[A-Za-z0-9][A-Za-z0-9._%+-]*"
+            r"@"
+            r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+            r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
+            r"(?![A-Za-z0-9._%+-])"
+        ), # accepts numeric final domains such as alice@example.123
         confidence_score=0.95,
     ),
     RegexRule(
         rule_id="ip_address",
         entity_type=EntityType.IP_ADDRESS,
         pattern=re.compile(
-            r"\b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-            r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-            r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\."
-            r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+            rf"(?<!\w)(?<!\d\.)"
+            rf"(?:{IPV4_OCTET}\.){{3}}"
+            rf"{IPV4_OCTET}"
+            rf"(?!\w)(?!\.\d)"
         ),
         confidence_score=0.90,
     ),
     RegexRule(
         rule_id="aws_access_key",
         entity_type=EntityType.ACCESS_KEY,
-        pattern=re.compile(r"\b(?:AKIA|ASIA|AIDA|AROA)[A-Z0-9]{16}\b"),
+        pattern=re.compile(
+            r"(?<![A-Za-z0-9])" r"(?:AKIA|ASIA|AIDA|AROA)[A-Z0-9]{16}" r"(?![A-Z0-9])"
+        ),
         confidence_score=0.98,
     ),
+    # split quoted and unquoted password into separate rules
     RegexRule(
-        rule_id="contextual_password",
+        rule_id="quoted_password",
         entity_type=EntityType.PASSWORD,
         pattern=re.compile(
-            r"\b(?:password|passwd|pwd)\s*(?::|=|is)\s*(?P<secret>[^\s,;]+)",
+            PASSWORD_CUE
+            + PASSWORD_SEPARATOR
+            + r"(?P<quote>[\"'`])"
+            + r"(?P<secret>[^\"'`\r\n]+)"
+            + r"(?P=quote)",
+            re.IGNORECASE,
+        ),
+        confidence_score=0.90,
+        group_name="secret",  # This allows finding span to point only at the password
+    ),
+    RegexRule(
+        rule_id="unquoted_password",
+        entity_type=EntityType.PASSWORD,
+        pattern=re.compile(
+            PASSWORD_CUE
+            + PASSWORD_SEPARATOR
+            + r"(?![\"'`])"
+            + r"(?!(?:required|unknown|redacted|hidden|reset|changed)\b)"
+            + r"(?P<secret>[^\s,;]+?)"
+            + r"(?=(?:[.?](?:\s|$)|[\s,;]|$))",
             re.IGNORECASE,
         ),
         confidence_score=0.85,
@@ -65,13 +100,15 @@ DEFAULT_RULES = (
         rule_id="token_like_secret",
         entity_type=EntityType.TOKEN,
         pattern=re.compile(
-            r"\b(?:"
-            r"sk_(?:live|test)_[A-Za-z0-9_]{8,}|"
-            r"ghp_[A-Za-z0-9_]{8,}|"
-            r"(?:[A-Za-z]+_)*tok_[A-Za-z0-9_]{6,}|"
-            r"sess_[A-Za-z0-9_]{8,}|"
-            r"deploy_live_[A-Za-z0-9_]{8,}"
-            r")\b"
+            r"(?<![A-Za-z0-9_])"
+            r"(?:"
+            r"sk_(?:live|test)_[A-Za-z0-9_]{8,128}|"
+            r"ghp_[A-Za-z0-9_]{8,128}|"
+            r"(?:[A-Za-z]+_)*tok_[A-Za-z0-9_]{6,128}|"
+            r"sess_[A-Za-z0-9_]{8,128}|"
+            r"deploy_live_[A-Za-z0-9_]{8,128}"
+            r")"
+            r"(?![A-Za-z0-9_])"
         ),
         confidence_score=0.88,
     ),
@@ -81,7 +118,13 @@ DEFAULT_RULES = (
         # Match 7-15 digits with optional international prefix and common
         # separators. The match starts and ends on a digit so surrounding
         # sentence whitespace and punctuation are not included in the span.
-        pattern=re.compile(r"(?<![\w+])\+?\d(?:[ ()-]*\d){6,14}(?!\w)"),
+        # ISO dates are excluded
+        pattern=re.compile(
+            r"(?<![\w+])"
+            r"(?!\d{4}-\d{2}-\d{2}(?!\d))"
+            r"\+?\d(?:[ ()-]*\d){6,14}"
+            r"(?!\w)"
+        ),
         confidence_score=0.88,
     ),
 )
