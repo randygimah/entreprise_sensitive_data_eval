@@ -44,7 +44,7 @@ DEFAULT_RULES = (
             r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
             r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
             r"(?![A-Za-z0-9._%+-])"
-        ), # accepts numeric final domains such as alice@example.123
+        ),  # accepts numeric final domains such as alice@example.123
         confidence_score=0.95,
     ),
     RegexRule(
@@ -62,7 +62,9 @@ DEFAULT_RULES = (
         rule_id="aws_access_key",
         entity_type=EntityType.ACCESS_KEY,
         pattern=re.compile(
-            r"(?<![A-Za-z0-9])" r"(?:AKIA|ASIA|AIDA|AROA)[A-Z0-9]{16}" r"(?![A-Z0-9])"
+            r"(?<![A-Za-z0-9])"
+            r"(?:AKIA|ASIA|AIDA|AROA)[A-Z0-9]{16}"
+            r"(?![A-Za-z0-9])"
         ),
         confidence_score=0.98,
     ),
