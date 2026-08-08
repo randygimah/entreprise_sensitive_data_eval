@@ -2,7 +2,7 @@
 
 import pytest
 
-from sensitive_eval.core.models import DatasetSample, EntityType, SourceType
+from sensitive_eval.core.models import DatasetSample, EntityType, Finding, SourceType
 from sensitive_eval.detectors.regex_detector import RegexDetector
 
 
@@ -187,3 +187,174 @@ class TestRegexFinding:
 
         entity_types = {finding.entity_type for finding in results.findings}
         assert entity_types == {EntityType.IP_ADDRESS, EntityType.TOKEN}
+
+
+class TestRegexSupportedVariants:
+    @pytest.mark.parametrize(
+        "text, raw_value, entity_type, rule_id",
+        (
+            (
+                "Contact (ops-team+alerts@example.co.uk).",
+                "ops-team+alerts@example.co.uk",
+                EntityType.EMAIL,
+                "email",
+            ),
+            (
+                "Host (255.255.255.255).",
+                "255.255.255.255",
+                EntityType.IP_ADDRESS,
+                "ip_address",
+            ),
+            (
+                'CLOUD_ACCESS_KEY="ASIA1234567890ABCDEF";',
+                "ASIA1234567890ABCDEF",
+                EntityType.ACCESS_KEY,
+                "aws_access_key",
+            ),
+            (
+                'DB_PASSWORD="Winter2026!".',
+                "Winter2026!",
+                EntityType.PASSWORD,
+                "quoted_password",
+            ),
+            (
+                "PORTAL_PASSWORD=SilverKey88!; rotate it.",
+                "SilverKey88!",
+                EntityType.PASSWORD,
+                "unquoted_password",
+            ),
+            (
+                "Rotate (ghp_abcdefgh12345678), then close the incident.",
+                "ghp_abcdefgh12345678",
+                EntityType.TOKEN,
+                "token_like_secret",
+            ),
+            (
+                "Call (+44 20 7946 0812).",
+                "+44 20 7946 0812",
+                EntityType.PHONE_NUMBER,
+                "phone_number",
+            ),
+        ),
+    )
+    def test_detects_supported_variant_with_exact_boundaries(
+        self,
+        text,
+        raw_value,
+        entity_type,
+        rule_id,
+    ):
+        sample = DatasetSample(
+            sample_id="supported-variant",
+            text=text,
+            source_type=SourceType.INTERNAL_COMMENT,
+        )
+
+        result = RegexDetector().detect(sample)
+        matching_findings = [
+            finding for finding in result.findings if finding.entity_type == entity_type
+        ]
+
+        assert len(matching_findings) == 1
+
+        finding = matching_findings[0]
+        expected_start = text.index(raw_value)
+        assert finding.span.start == expected_start
+        assert finding.span.end == expected_start + len(raw_value)
+        assert text[finding.span.start : finding.span.end] == raw_value
+        assert finding.rule_id == rule_id
+
+
+class TestRegexFalsePositiveGuards:
+    @pytest.mark.parametrize(
+        "entity_type, text",
+        (
+            (EntityType.EMAIL, "Contact alice@example for access."),
+            (EntityType.EMAIL, "Contact alice@@example.com for access."),
+            (EntityType.IP_ADDRESS, "Invalid host 256.1.1.1."),
+            (EntityType.IP_ADDRESS, "Invalid host 10.20.30.40.50."),
+            (EntityType.IP_ADDRESS, "Identifier host172.16.4.22 is not an IP."),
+            (EntityType.ACCESS_KEY, "Key xAKIAIOSFODNN7EXAMPLE is embedded."),
+            (EntityType.ACCESS_KEY, "Key AKIAIOSFODNN7EXAMPLEx is embedded."),
+            (EntityType.ACCESS_KEY, "Key AKIA123 is too short."),
+            (EntityType.PASSWORD, "A password is required for access."),
+            (EntityType.PASSWORD, "The password is redacted in this ticket."),
+            (EntityType.PASSWORD, "Please reset the password today."),
+            (EntityType.TOKEN, "Value xsk_live_abcdefghij is embedded."),
+            (EntityType.TOKEN, "Value sk_live_short is too short."),
+            (EntityType.PHONE_NUMBER, "Deployment date: 2026-08-01."),
+            (EntityType.PHONE_NUMBER, "Build 123456 completed successfully."),
+            (
+                EntityType.PHONE_NUMBER,
+                "Invalid contact 1234567890123456 is too long.",
+            ),
+        ),
+    )
+    def test_rejects_invalid_or_embedded_candidate(self, entity_type, text):
+        sample = DatasetSample(
+            sample_id="guard-negative",
+            text=text,
+            source_type=SourceType.INTERNAL_COMMENT,
+        )
+
+        result = RegexDetector().detect(sample)
+
+        assert all(finding.entity_type != entity_type for finding in result.findings)
+
+
+class TestRegexDetectorContract:
+    def test_empty_result_preserves_detector_identity(self):
+        sample = DatasetSample(
+            sample_id="no-findings",
+            text="The deployment completed successfully.",
+            source_type=SourceType.OPERATIONAL_NOTE,
+        )
+
+        result = RegexDetector().detect(sample)
+
+        assert result.sample_id == sample.sample_id
+        assert result.detector_name == "regex"
+        assert result.findings == ()
+
+    def test_findings_are_valid_masked_and_do_not_store_raw_values(self):
+        sample = DatasetSample(
+            sample_id="contract-sample",
+            text=(
+                "Contact alice@example.com from 10.20.30.40 or +44 20 7946 0812; "
+                'CLOUD_ACCESS_KEY="AKIAIOSFODNN7EXAMPLE"; '
+                'DB_PASSWORD="Winter2026!"; token sk_live_abcdefgh12345678.'
+            ),
+            source_type=SourceType.CONFIG_SNIPPET,
+        )
+
+        result = RegexDetector().detect(sample)
+
+        assert len(result.findings) == 6
+        assert "raw_value" not in Finding.__dataclass_fields__
+
+        for finding in result.findings:
+            raw_value = sample.text[finding.span.start : finding.span.end]
+
+            assert 0 <= finding.span.start < finding.span.end <= len(sample.text)
+            assert finding.detector_name == result.detector_name
+            assert finding.rule_id is not None
+            assert finding.confidence_score is not None
+            assert finding.masked_value is not None
+            assert finding.masked_value != raw_value
+            assert raw_value not in repr(finding)
+
+    def test_detection_is_deterministic(self):
+        sample = DatasetSample(
+            sample_id="deterministic-sample",
+            text=(
+                "Contact alice@example.com from 10.20.30.40 and rotate "
+                "sk_live_abcdefgh12345678."
+            ),
+            source_type=SourceType.INCIDENT_REPORT,
+        )
+        detector = RegexDetector()
+
+        first_result = detector.detect(sample)
+        second_result = detector.detect(sample)
+
+        assert first_result == second_result
