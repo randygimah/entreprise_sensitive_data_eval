@@ -109,6 +109,36 @@ mention identifies a confidential customer, partner, project, or relationship
 requires contextual sensitivity classification beyond ordinary NER. This is
 reserved for future work.
 
+## Regex boundary guards and limitations
+
+The regex baseline uses format and boundary guards to reduce partial matches
+and obvious false positives. A boundary guard defines which characters may
+appear immediately before or after a candidate. It is distinct from the gold
+annotation policy: the guard controls detector behaviour, while the annotation
+policy defines the correct span against which that behaviour is evaluated.
+
+The current rules implement the following protections and limitations:
+
+| Entity | Implemented guards | Known limitations |
+| --- | --- | --- |
+| Email | Requires a local part, `@`, one or more domain labels, and outer boundaries based on email-like characters. Surrounding ticket punctuation is excluded. | This is intentionally not full RFC email validation. Numeric final domains and some malformed local parts, including consecutive or terminal dots, may still match. Format alone cannot determine whether an address is sensitive in context. |
+| IPv4 address | Validates four octets in the range 0--255, prevents matching inside a word or as part of a longer dotted numeric sequence, and allows ordinary sentence punctuation after the address. | IPv6 is unsupported. A syntactically valid IP used only as a documentation example is indistinguishable by shape from an operational host; sensitivity requires contextual logic or an explicit dataset policy. |
+| AWS-style access key | Requires a known prefix (`AKIA`, `ASIA`, `AIDA`, or `AROA`) followed by 16 uppercase letters or digits, with outer alphanumeric boundaries. | Other cloud providers and unknown key formats are missed. A valid-looking placeholder cannot reliably be distinguished from a disclosed key by format alone. The trailing boundary should be verified against lowercase suffixes. |
+| Password | Uses explicit password cues and separators, supports configuration keys such as `DB_PASSWORD`, separates quoted and unquoted values, excludes surrounding quotes, and rejects several common non-values such as `required`, `unknown`, and `redacted`. | The exclusion vocabulary is necessarily incomplete. Natural-language statements can still be misclassified, and punctuation at the end of an unquoted password can be inherently ambiguous. Password disclosures without a recognised cue are missed. |
+| Token | Requires one of the supported token prefixes, constrains the token alphabet and length, and prevents matches embedded in a larger token-like identifier. | Unknown or prefix-free tokens are missed. A documented placeholder that follows a supported format cannot be classified as benign from shape alone. |
+| Phone number | Requires 7--15 digits, permits a leading `+` and common spaces, parentheses, or hyphens, excludes surrounding word characters, and rejects ISO dates of the form `YYYY-MM-DD`. | A bare numeric account, build, order, or ticket ID can have the same shape as a phone number. Distinguishing these requires nearby phone-related context, a post-match guard, or dataset policy. Other date formats and extensions are not yet handled. |
+
+The v1 regex baseline does not attempt person-name detection. Account
+identifiers also remain unsupported until their accepted formats can be defined
+without introducing an overly broad alphanumeric rule.
+
+These limitations are part of the experimental design rather than problems to
+hide. Format-level guards should handle invalid structure, embedded substrings,
+and clear delimiters. They should not be expanded indefinitely to imitate
+semantic reasoning. Ambiguous but well-formed cases will be represented in the
+development and held-out datasets so that the comparison can measure what NER
+and a local LLM add beyond deterministic rules.
+
 ## Dataset design
 
 The current development dataset contains 40 labelled synthetic samples in
